@@ -2,24 +2,64 @@ import tkinter as tk
 from tkinter import scrolledtext, Entry, Frame, Label
 import sys
 import os
+import csv
+import base64
+class VFSNode:
+    def __init__(self, name, is_directory=False, content=None):
+        self.name = name
+        self.is_directory = is_directory
+        self.content = content
+        self.children = {}
+
 class VFSEmulator:
     def __init__(self, root, vfs_path=None, startup_script=None):
         self.root = root
         self.root.title("VFS")
         self.root.geometry("800x600")
-
-        self.vfs_path = vfs_path or os.path.abspath(".")
+        self.vfs_path = vfs_path
         self.startup_script = startup_script
-
+        self.vfs_root = None
+        self.load_vfs()
         self.current_directory = "/home/user"
         self.create_interface()
         self.display_welcome()
-
         if self.startup_script and os.path.exists(self.startup_script):
             self.execute_script(self.startup_script)
-
         self.command_entry.focus()
         self.command_entry.bind('<Return>', self.execute_command)
+
+    def load_vfs(self):
+        if self.vfs_path and os.path.exists(self.vfs_path):
+            try:
+                with open(self.vfs_path, 'r', newline='', encoding='utf-8') as f:
+                    reader = csv.reader(f)
+                    self.vfs_root = VFSNode("", True)
+                    for row in reader:
+                        if len(row) >= 2:
+                            path = row[0]
+                            is_dir = row[1] == "directory"
+                            content = row[2] if len(row) > 2 else None
+                            self.add_to_vfs(path, is_dir, content)
+                print(f"VFS загружена из: {self.vfs_path}")
+            except Exception as e:
+                print(f"Ошибка загрузки VFS: {e}")
+
+    def add_to_vfs(self, path, is_directory, content):
+        parts = [p for p in path.split('/') if p]
+        current = self.vfs_root
+
+        for part in parts[:-1]:
+            if part not in current.children:
+                current.children[part] = VFSNode(part, True)
+            current = current.children[part]
+        if parts:
+            last_part = parts[-1]
+            if content and not is_directory:
+                try:
+                    content = base64.b64decode(content).decode('utf-8')
+                except:
+                    pass
+            current.children[last_part] = VFSNode(last_part, is_directory, content)
 
     def create_interface(self):
         self.output_area = scrolledtext.ScrolledText(
@@ -30,10 +70,8 @@ class VFSEmulator:
             state='disabled'
         )
         self.output_area.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-
         input_frame = Frame(self.root)
         input_frame.pack(fill=tk.X, padx=5, pady=5)
-
         self.prompt_label = Label(
             input_frame,
             text=f"vfs:{self.current_directory}$ ",
@@ -42,7 +80,6 @@ class VFSEmulator:
             font=('Courier New', 12)
         )
         self.prompt_label.pack(side=tk.LEFT)
-
         self.command_entry = Entry(
             input_frame,
             bg='black',
@@ -51,6 +88,7 @@ class VFSEmulator:
             width=80
         )
         self.command_entry.pack(side=tk.LEFT, fill=tk.X, expand=True)
+
     def display_welcome(self):
         welcome_msg = f"Эмулятор VFS v1.0\nVFS путь: {self.vfs_path}\n"
         if self.startup_script:
@@ -70,7 +108,6 @@ class VFSEmulator:
     def parse_command(self, command_string):
         if not command_string.strip():
             return "", []
-
         parts = command_string.strip().split()
         command = parts[0]
         args = parts[1:] if len(parts) > 1 else []
@@ -80,11 +117,8 @@ class VFSEmulator:
     def execute_command(self, event=None):
         command_string = self.command_entry.get().strip()
         self.command_entry.delete(0, tk.END)
-
         self.display_output(f"vfs:{self.current_directory}$ {command_string}\n")
-
         command, args = self.parse_command(command_string)
-
         if command == "exit":
             self.cmd_exit()
         elif command == "ls":
@@ -97,8 +131,8 @@ class VFSEmulator:
             pass
         else:
             self.display_output(f"vfs: Команда {command} не найдена\n")
-
         self.output_area.see(tk.END)
+
     def execute_script(self, script_path):
         try:
             with open(script_path, 'r', encoding='utf-8') as f:
@@ -122,35 +156,22 @@ class VFSEmulator:
 
     def cmd_ls(self, args):
         self.display_output(f"Команда 'ls' вызвана с аргументами: {args}\n")
+        self.display_output(f"VFS загружена: {'да' if self.vfs_root else 'нет'}\n")
 
     def cmd_cd(self, args):
         self.display_output(f"Команда 'cd' вызвана с аргументами: {args}\n")
-        if args:
-            if args[0] == "..":
-                if self.current_directory != "/":
-                    parts = self.current_directory.rstrip("/").split("/")
-                    if len(parts) > 1:
-                        self.current_directory = "/".join(parts[:-1]) or "/"
-            elif args[0].startswith("/"):
-                self.current_directory = args[0]
-            else:
-                if self.current_directory == "/":
-                    self.current_directory = f"/{args[0]}"
-                else:
-                    self.current_directory = f"{self.current_directory}/{args[0]}"
 
-        self.update_prompt()
     def cmd_conf_dump(self):
         self.display_output("Конфигурация эмулятора:\n")
         self.display_output(f"  VFS путь: {self.vfs_path}\n")
         self.display_output(f"  Стартовый скрипт: {self.startup_script}\n")
         self.display_output(f"  Текущая директория: {self.current_directory}\n")
+        self.display_output(f"  VFS загружена: {'да' if self.vfs_root else 'нет'}\n")
 
 
 def main():
     vfs_path = None
     startup_script = None
-
     i = 1
     while i < len(sys.argv):
         if sys.argv[i] == "--vfs-path" and i + 1 < len(sys.argv):
@@ -165,5 +186,6 @@ def main():
     root = tk.Tk()
     app = VFSEmulator(root, vfs_path, startup_script)
     root.mainloop()
+
 if __name__ == "__main__":
     main()

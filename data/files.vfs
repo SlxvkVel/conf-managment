@@ -1,0 +1,6 @@
+path,type,content
+documents/,directory,
+documents/file1.txt,file,VGVzdCBmaWxlIDE=
+documents/file2.txt,file,VGVzdCBmaWxlIDI=
+downloads/,directory,
+downloads/image.jpg,file,ZmFrZV9pbWFnZV9kYXRh

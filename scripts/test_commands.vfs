@@ -1,0 +1,5 @@
+# Тест загрузки VFS - этап 3
+conf-dump
+ls
+cd test
+conf-dump
