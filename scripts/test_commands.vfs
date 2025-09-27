@@ -1,5 +1,14 @@
-# Тест загрузки VFS - этап 3
+# Тест команд этапа 4
 conf-dump
 ls
-cd test
-conf-dump
+cd level1
+ls
+cd level2
+ls
+cd /
+tail file1.txt
+tree
+tail nonexistent.txt
+cd invalid_path
+tree invalid_path
+uptime
