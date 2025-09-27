@@ -16,7 +16,7 @@ class VFSNode:
 class VFSEmulator:
     def __init__(self, root, vfs_path=None, startup_script=None):
         self.root = root
-        self.root.title("VFS")
+        self.root.title("VFS emulator")
         self.root.geometry("800x600")
         self.start_time = time.time()
         self.vfs_path = vfs_path
@@ -54,6 +54,7 @@ class VFSEmulator:
             if part not in current.children:
                 current.children[part] = VFSNode(part, True)
             current = current.children[part]
+
         if parts:
             last_part = parts[-1]
             if content and not is_directory:
@@ -66,10 +67,12 @@ class VFSEmulator:
     def get_node(self, path):
         if not self.vfs_root:
             return None
+
         if not path.startswith("/"):
             path = self.current_directory + "/" + path if self.current_directory != "/" else "/" + path
         parts = [p for p in path.split('/') if p]
         current = self.vfs_root
+
         for part in parts:
             if part not in current.children:
                 return None
@@ -85,8 +88,10 @@ class VFSEmulator:
             state='disabled'
         )
         self.output_area.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+
         input_frame = Frame(self.root)
         input_frame.pack(fill=tk.X, padx=5, pady=5)
+
         self.prompt_label = Label(
             input_frame,
             text=f"vfs:{self.current_directory}$ ",
@@ -134,7 +139,6 @@ class VFSEmulator:
         self.command_entry.delete(0, tk.END)
         self.display_output(f"vfs:{self.current_directory}$ {command_string}\n")
         command, args = self.parse_command(command_string)
-
         if command == "exit":
             self.cmd_exit()
         elif command == "ls":
@@ -147,6 +151,8 @@ class VFSEmulator:
             self.cmd_uptime(args)
         elif command == "tree":
             self.cmd_tree(args)
+        elif command == "mkdir":
+            self.cmd_mkdir(args)
         elif command == "conf-dump":
             self.cmd_conf_dump()
         elif command == "":
@@ -163,7 +169,6 @@ class VFSEmulator:
                     if line and not line.startswith('#'):
                         self.display_output(f"vfs:{self.current_directory}$ {line}\n")
                         command, args = self.parse_command(line)
-
                         if command == "ls":
                             self.cmd_ls(args)
                         elif command == "cd":
@@ -174,6 +179,8 @@ class VFSEmulator:
                             self.cmd_uptime(args)
                         elif command == "tree":
                             self.cmd_tree(args)
+                        elif command == "mkdir":
+                            self.cmd_mkdir(args)
                         elif command == "conf-dump":
                             self.cmd_conf_dump()
         except Exception as e:
@@ -188,7 +195,6 @@ class VFSEmulator:
         if not self.vfs_root:
             self.display_output("Ошибка: VFS не загружена\n")
             return
-
         node = self.get_node(path)
         if not node:
             self.display_output(f"Ошибка: путь {path} не найден\n")
@@ -213,10 +219,8 @@ class VFSEmulator:
             self.current_directory = "/"
             self.update_prompt()
             return
-
         path = args[0]
         new_path = ""
-
         if path.startswith("/"):
             new_path = path
         else:
@@ -233,7 +237,6 @@ class VFSEmulator:
         if not node.is_directory:
             self.display_output(f"Ошибка: {new_path} не является директорией\n")
             return
-
         self.current_directory = new_path
         self.update_prompt()
 
@@ -274,7 +277,6 @@ class VFSEmulator:
 
     def cmd_tree(self, args):
         path = args[0] if args else self.current_directory
-
         if not self.vfs_root:
             self.display_output("Ошибка: VFS не загружена\n")
             return
@@ -287,7 +289,6 @@ class VFSEmulator:
         if not node.is_directory:
             self.display_output(f"Ошибка: {path} не является директорией\n")
             return
-
         self.display_output(f"{path}\n")
         self._print_tree(node, 1)
 
@@ -299,6 +300,36 @@ class VFSEmulator:
                 self._print_tree(child, level + 1)
             else:
                 self.display_output(f"{prefix}{name}\n")
+
+    def cmd_mkdir(self, args):
+        if not args:
+            self.display_output("Ошибка: укажите имя директории\n")
+            return
+
+        if not self.vfs_root:
+            self.display_output("Ошибка: VFS не загружена\n")
+            return
+        dir_name = args[0]
+        new_path = ""
+        if dir_name.startswith("/"):
+            new_path = dir_name
+        else:
+            if self.current_directory == "/":
+                new_path = f"/{dir_name}"
+            else:
+                new_path = f"{self.current_directory}/{dir_name}"
+        existing_node = self.get_node(new_path)
+        if existing_node:
+            self.display_output(f"Ошибка: путь {new_path} уже существует\n")
+            return
+        parts = [p for p in new_path.split('/') if p]
+        current = self.vfs_root
+        for part in parts:
+            if part not in current.children:
+                current.children[part] = VFSNode(part, True)
+            current = current.children[part]
+        self.display_output(f"Директория {new_path} создана\n")
+
     def cmd_conf_dump(self):
         self.display_output("Конфигурация эмулятора:\n")
         self.display_output(f"  VFS путь: {self.vfs_path}\n")

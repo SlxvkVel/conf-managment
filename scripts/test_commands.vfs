@@ -1,14 +1,19 @@
-# Тест команд этапа 4
+# Тест команд 5 этапа
 conf-dump
 ls
-cd level1
+mkdir new_folder
 ls
-cd level2
+cd new_folder
 ls
-cd /
-tail file1.txt
+mkdir subfolder
+ls
 tree
-tail nonexistent.txt
+mkdir /global_folder
+cd /
+ls
+mkdir existing_folder
+cd level1
+mkdir existing_folder
+mkdir ""
 cd invalid_path
-tree invalid_path
-uptime
+mkdir new_dir
