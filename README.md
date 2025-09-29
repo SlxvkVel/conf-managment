@@ -60,4 +60,4 @@
 python src/vfs.py
 
 # С VFS и стартовым скриптом
-python src/vfs.py --vfs-path "data/complex_structure.vfs" --startup-script "scripts/test_commands.vfs"
+python src/vfs.py --vfs-path "data/complex_structure.csv" --startup-script "scripts/test_stage5.vfs"

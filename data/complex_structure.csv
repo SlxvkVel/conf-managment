@@ -2,7 +2,7 @@ path,type,content
 level1/,directory,
 level1/level2/,directory,
 level1/level2/level3/,directory,
-level1/level2/level3/deep_file.txt,file,"Строка 1
+level1/level2/level3/file3.txt,file,"Строка 1
 Строка 2
 Строка 3
 Строка 4
@@ -15,7 +15,7 @@ level1/level2/level3/deep_file.txt,file,"Строка 1
 Строка 11"
 level1/file1.txt,file,Содержимое файла 1
 level1/level2/file2.txt,file,Содержимое файла 2
-file1.txt,file,"Line 1
+file4.txt,file,"Line 1
 Line 2
 Line 3
 Line 4

@@ -1,0 +1,6 @@
+ls
+cd level1
+ls
+tree
+tail file1.txt
+uptime

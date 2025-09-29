@@ -1,13 +1,7 @@
 # Тест команд 5 этапа
-conf-dump
-ls
 mkdir new_folder
-ls
 cd new_folder
-ls
 mkdir subfolder
-ls
-tree
 mkdir /global_folder
 cd /
 ls
